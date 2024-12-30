@@ -1,95 +1,78 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [weatherData, setWeatherData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  useEffect(() => {
+    async function fetchWeather() {
+      const lat = 47.66;
+      const lon = 9.18;
+      const today = dayjs();
+      const pastYear = today.subtract(365, 'day');
+
+      const promises = [];
+      for (let d = pastYear; d.isBefore(today) || d.isSame(today, 'day'); d = d.add(1, 'day')) {
+        const date = d.format('YYYY-MM-DD'); // Format date as YYYY-MM-DD
+        promises.push(
+            fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
+                .then((response) => response.json())
+                .then((data) => {
+                  return data.weather.filter((entry) => {
+                    const hour = dayjs(entry.timestamp).utc().hour();
+                    return hour === 12; // Filter for 12 o'clock UTC
+                  });
+                })
+        );
+      }
+
+      try {
+        const results = await Promise.all(promises);
+        const flattenedResults = results.flat();
+        setWeatherData(flattenedResults);
+      } catch (error) {
+        console.error('Error fetching weather data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchWeather();
+  }, []);
+
+  function formatDateWithLeadingZeros(dateString) {
+    return dayjs(dateString).format('DD.MM.YYYY');
+  }
+
+  return (
+      <div>
+        <h1>Weather Data for the Last 365 Days</h1>
+        {loading ? (
+            <p>Loading...</p>
+        ) : (
+            <table border="1">
+              <thead>
+              <tr>
+                <th>Date</th>
+                <th>Temperature at Noon (°C)</th>
+              </tr>
+              </thead>
+              <tbody>
+              {weatherData.map((entry, index) => (
+                  <tr key={index}>
+                    <td>{formatDateWithLeadingZeros(entry.timestamp)}</td>
+                    <td>{entry.temperature}°C</td>
+                  </tr>
+              ))}
+              </tbody>
+            </table>
+        )}
+      </div>
   );
 }
