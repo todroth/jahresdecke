@@ -18,7 +18,7 @@ export default function Home() {
       const pastYear = today.subtract(365, 'day');
 
       const promises = [];
-      for (let d = pastYear; d.isBefore(today) || d.isSame(today, 'day'); d = d.add(1, 'day')) {
+      for (let d = today; d.isAfter(pastYear) || d.isSame(pastYear, 'day'); d = d.subtract(1, 'day')) {
         const date = d.format('YYYY-MM-DD'); // Format date as YYYY-MM-DD
         promises.push(
             fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
