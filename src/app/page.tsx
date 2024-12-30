@@ -24,7 +24,7 @@ export default function Home() {
             fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
                 .then((response) => response.json())
                 .then((data) => {
-                  return data.weather.filter((entry) => {
+                  return data.weather.filter((entry: { timestamp: string }) => {
                     const hour = dayjs(entry.timestamp).utc().hour();
                     return hour === 12; // Filter for 12 o'clock UTC
                   });
@@ -33,9 +33,13 @@ export default function Home() {
       }
 
       try {
+
         const results = await Promise.all(promises);
-        const flattenedResults = results.flat();
+        const flattenedResults: any[] = results.flat();
+
+        // @ts-ignore
         setWeatherData(flattenedResults);
+
       } catch (error) {
         console.error('Error fetching weather data:', error);
       } finally {
@@ -46,7 +50,7 @@ export default function Home() {
     fetchWeather();
   }, []);
 
-  function formatDateWithLeadingZeros(dateString) {
+  function formatDateWithLeadingZeros(dateString: string) {
     return dayjs(dateString).format('DD.MM.YYYY');
   }
 
@@ -56,7 +60,7 @@ export default function Home() {
         {loading ? (
             <p>Loading...</p>
         ) : (
-            <table border="1">
+            <table border={1}>
               <thead>
               <tr>
                 <th>Date</th>
@@ -64,7 +68,7 @@ export default function Home() {
               </tr>
               </thead>
               <tbody>
-              {weatherData.map((entry, index) => (
+              {weatherData.map((entry: {timestamp: string, temperature: number}, index) => (
                   <tr key={index}>
                     <td>{formatDateWithLeadingZeros(entry.timestamp)}</td>
                     <td>{entry.temperature}°C</td>
