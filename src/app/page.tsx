@@ -42,7 +42,7 @@ export default function Home() {
             for (let d = today; d.isAfter(pastYear) || d.isSame(pastYear, 'day'); d = d.subtract(1, 'day')) {
                 const date = d.format('YYYY-MM-DD');
 
-                if (d.isToday() && dayjs().hour() < 12) {
+                if (d.isToday() && dayjs().utc().hour() < 12) {
                     continue;
                 }
 
@@ -90,63 +90,59 @@ export default function Home() {
 
     return (
         <div>
-            <div>
-                <h2>Farben</h2>
+            <h2>Farben</h2>
 
+            <table border={1}>
+                <thead>
+                <tr>
+                    <th>Range</th>
+                    <th>Name</th>
+                    <th>Colour</th>
+                    <th>Dyelot</th>
+                    <th style={{width: 100}}> </th>
+                </tr>
+                </thead>
+                <tbody>
+                {colors.map(color => (
+                    <tr key={color.id}>
+                        <td>{color.range()}</td>
+                        <td>{color.label}</td>
+                        <td>{color.id}</td>
+                        <td>{color.dyelot}</td>
+                        <td style={{background: color.hexCode}}> </td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+
+            <h2>Temperaturen</h2>
+
+            {loading ? (
+                <div>Loading...</div>
+            ) : (
                 <table border={1}>
                     <thead>
                     <tr>
-                        <th>Range</th>
-                        <th>Name</th>
-                        <th>Colour</th>
-                        <th>Dyelot</th>
-                        <th style={{width: 100}}></th>
+                        <th>Datum</th>
+                        <th>Wochentag</th>
+                        <th>Temperatur</th>
+                        <th>Farbe</th>
+                        <th style={{width: 100}}> </th>
                     </tr>
                     </thead>
                     <tbody>
-                    {colors.map(color => (
-                        <tr key={color.id}>
-                            <td>{color.range()}</td>
-                            <td>{color.label}</td>
-                            <td>{color.id}</td>
-                            <td>{color.dyelot}</td>
-                            <td style={{background: color.hexCode}}></td>
+                    {weatherData.map((entry: { timestamp: string, temperature: number }, index) => (
+                        <tr key={index}>
+                            <td>{getDate(entry.timestamp)}</td>
+                            <td>{getWeekDay(entry.timestamp)}</td>
+                            <td>{entry.temperature}°C</td>
+                            <td>{getColor(entry.temperature).label}</td>
+                            <td style={{background: getColor(entry.temperature).hexCode}}> </td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
-            </div>
-            <div>
-
-                <h2>Temperaturen</h2>
-
-                {loading ? (
-                    <p>Loading...</p>
-                ) : (
-                    <table border={1}>
-                        <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Wochentag</th>
-                            <th>Temperatur</th>
-                            <th>Farbe</th>
-                            <th style={{width: 100}}></th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {weatherData.map((entry: { timestamp: string, temperature: number }, index) => (
-                            <tr key={index}>
-                                <td>{getDate(entry.timestamp)}</td>
-                                <td>{getWeekDay(entry.timestamp)}</td>
-                                <td>{entry.temperature}°C</td>
-                                <td>{getColor(entry.temperature).label}</td>
-                                <td style={{background: getColor(entry.temperature).hexCode}}></td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+            )}
         </div>
     );
 }
