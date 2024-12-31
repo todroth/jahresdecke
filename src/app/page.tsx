@@ -2,13 +2,11 @@
 
 import React, {useState, useEffect} from 'react';
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import isToday from 'dayjs/plugin/isToday';
 import {Color} from "@/app/Color";
 import 'dayjs/locale/de';
 
-dayjs.extend(utc);
 dayjs.extend(localizedFormat);
 dayjs.extend(isToday);
 dayjs.locale('de');
@@ -43,7 +41,7 @@ export default function Home() {
             for (let d = today; d.isAfter(pastYear) || d.isSame(pastYear, 'day'); d = d.subtract(1, 'day')) {
                 const date = d.format('YYYY-MM-DD');
 
-                if (d.isToday() && dayjs().utc().hour() < 12) {
+                if (d.isToday() && dayjs().hour() < 12) {
                     continue;
                 }
 
@@ -52,7 +50,7 @@ export default function Home() {
                         .then((response) => response.json())
                         .then((data) => {
                             return data.weather.filter((entry: { timestamp: string }) => {
-                                const hour = dayjs(entry.timestamp).utc().hour();
+                                const hour = dayjs(entry.timestamp).hour();
                                 return hour === 12; // Filter for 12 o'clock UTC
                             });
                         })
