@@ -69,6 +69,7 @@ export default function Home() {
 
                 const grouped = Object.groupBy(flattenedResults, result => getColor(result.temperature).id);
                 const colorCount = Object.entries(grouped).reduce((acc, [key, value]) => {
+                    // @ts-ignore
                     acc[key] = value.length;
                     return acc;
                 }, {});
@@ -96,6 +97,7 @@ export default function Home() {
         return colors.filter(color => color.matches(temp))[0];
     }
 
+    // @ts-ignore
     return (
         <div>
             <h2>Farben</h2>
@@ -119,7 +121,9 @@ export default function Home() {
                         <td>{color.id}</td>
                         <td>{color.dyelot}</td>
                         <td style={{background: color.hexCode}}></td>
-                        <td>{count[color.id]}</td>
+                        <td>{// @ts-ignore
+                            count[color.id]
+                        }</td>
                     </tr>
                 ))}
                 </tbody>
@@ -137,7 +141,7 @@ export default function Home() {
                         <th>Wochentag</th>
                         <th>Temperatur</th>
                         <th>Farbe</th>
-                        <th style={{width: 100}}> </th>
+                        <th style={{width: 100}}></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -147,7 +151,7 @@ export default function Home() {
                             <td>{getWeekDay(entry.timestamp)}</td>
                             <td>{entry.temperature}°C</td>
                             <td>{getColor(entry.temperature).label}</td>
-                            <td style={{background: getColor(entry.temperature).hexCode}}> </td>
+                            <td style={{background: getColor(entry.temperature).hexCode}}></td>
                         </tr>
                     ))}
                     </tbody>
