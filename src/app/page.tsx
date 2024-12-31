@@ -16,6 +16,7 @@ dayjs.locale('de');
 export default function Home() {
     const [weatherData, setWeatherData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [count, setCount] = useState({});
 
     const colors = [
         new Color(null, 0, 'Mintgrün', '21', '3901', '#d5e3ca'),
@@ -66,6 +67,13 @@ export default function Home() {
                 // @ts-ignore
                 setWeatherData(flattenedResults);
 
+                const grouped = Object.groupBy(flattenedResults, result => getColor(result.temperature).id);
+                const colorCount = Object.entries(grouped).reduce((acc, [key, value]) => {
+                    acc[key] = value.length;
+                    return acc;
+                }, {});
+                setCount(colorCount);
+
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             } finally {
@@ -99,7 +107,8 @@ export default function Home() {
                     <th>Name</th>
                     <th>Colour</th>
                     <th>Dyelot</th>
-                    <th style={{width: 100}}> </th>
+                    <th style={{width: 100}}></th>
+                    <th>Count</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -109,7 +118,8 @@ export default function Home() {
                         <td>{color.label}</td>
                         <td>{color.id}</td>
                         <td>{color.dyelot}</td>
-                        <td style={{background: color.hexCode}}> </td>
+                        <td style={{background: color.hexCode}}></td>
+                        <td>{count[color.id]}</td>
                     </tr>
                 ))}
                 </tbody>
