@@ -39,7 +39,7 @@ export class Color {
     range(): string {
 
         if (this.min !== null && this.max !== null) {
-            return `${this.min}°C - ${this.max}°C`;
+            return `≥ ${this.min}°C & < ${this.max}°C`;
         }
 
         if (this.min !== null) {
