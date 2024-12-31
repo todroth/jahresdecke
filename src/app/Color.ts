@@ -43,7 +43,7 @@ export class Color {
         }
 
         if (this.min !== null) {
-            return `> ${this.min}°C`;
+            return `≥ ${this.min}°C`;
         }
 
         if (this.max !== null) {
