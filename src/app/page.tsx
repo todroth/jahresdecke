@@ -95,6 +95,11 @@ export default function Home() {
         return colors.filter(color => color.matches(temp))[0];
     }
 
+    function isWeekend(dateString: string) {
+        const date = dayjs(dateString);
+        return [0, 6].includes(date.day());
+    }
+
     // @ts-ignore
     return (
         <div>
@@ -119,7 +124,8 @@ export default function Home() {
                         <td>{color.id}</td>
                         <td>{color.dyelot}</td>
                         <td style={{background: color.hexCode}}></td>
-                        <td>{// @ts-ignore
+                        <td>{
+                            // @ts-ignore
                             count[color.id]
                         }</td>
                     </tr>
@@ -144,13 +150,26 @@ export default function Home() {
                     </thead>
                     <tbody>
                     {weatherData.map((entry: { timestamp: string, temperature: number }, index) => (
-                        <tr key={index}>
-                            <td>{getDate(entry.timestamp)}</td>
-                            <td>{getWeekDay(entry.timestamp)}</td>
-                            <td>{entry.temperature}°C</td>
-                            <td>{getColor(entry.temperature).label}</td>
-                            <td style={{background: getColor(entry.temperature).hexCode}}></td>
-                        </tr>
+
+                        <>
+                            {isWeekend(entry.timestamp)
+                                ? <tr key={index} style={{color: '#666666'}}>
+                                    <td>{getDate(entry.timestamp)}</td>
+                                    <td>{getWeekDay(entry.timestamp)}</td>
+                                    <td>{entry.temperature}°C</td>
+                                    <td>{getColor(entry.temperature).label}</td>
+                                    <td></td>
+                                </tr>
+                                : <tr key={index}>
+                                    <td>{getDate(entry.timestamp)}</td>
+                                    <td>{getWeekDay(entry.timestamp)}</td>
+                                    <td>{entry.temperature}°C</td>
+                                    <td>{getColor(entry.temperature).label}</td>
+                                    <td style={{background: getColor(entry.temperature).hexCode}}></td>
+                                </tr>
+                            }
+
+                        </>
                     ))}
                     </tbody>
                 </table>
