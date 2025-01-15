@@ -1,20 +1,25 @@
-'use client'
+'use client';
 
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import isToday from 'dayjs/plugin/isToday';
-import {Color} from "@/app/Color";
+import {Color} from '@/app/Color';
 import 'dayjs/locale/de';
 
 dayjs.extend(localizedFormat);
 dayjs.extend(isToday);
 dayjs.locale('de');
 
+type WeatherDataType = {
+    timestamp: string;
+    temperature: number;
+};
+
 export default function Home() {
-    const [weatherData, setWeatherData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [count, setCount] = useState({});
+    const [weatherData, setWeatherData] = useState<WeatherDataType[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [count, setCount] = useState<Record<string, number>>({});
 
     const colors = [
         new Color(null, 0, 'Mintgrün', '21', '3901', '#d5e3ca'),
@@ -27,17 +32,17 @@ export default function Home() {
         new Color(18, 21, 'Amethyst', '64', '3403', '#B87F8F'),
         new Color(21, 24, 'Rost', '65', '3901', '#D0694F'),
         new Color(24, 27, 'Wüstenrose', '63', '0226', '#EBBBAA'),
-        new Color(27, null, 'Pfirsich', '27', '0226', '#F4AF92')
+        new Color(27, null, 'Pfirsich', '27', '0226', '#F4AF92'),
     ];
 
     useEffect(() => {
-        async function fetchWeather() {
+        const fetchWeather = async () => {
             const lat = 47.66;
             const lon = 9.18;
             const today = dayjs();
             const pastYear = today.subtract(365, 'day');
 
-            const promises = [];
+            const promises: Promise<WeatherDataType[]>[] = [];
             for (let d = today; d.isAfter(pastYear) || d.isSame(pastYear, 'day'); d = d.subtract(1, 'day')) {
                 const date = d.format('YYYY-MM-DD');
 
@@ -49,7 +54,7 @@ export default function Home() {
                     fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
                         .then((response) => response.json())
                         .then((data) => {
-                            return data.weather.filter((entry: { timestamp: string }) => {
+                            return data.weather.filter((entry: WeatherDataType) => {
                                 const hour = dayjs(entry.timestamp).hour();
                                 return hour === 12; // Filter for 12 o'clock UTC
                             });
@@ -58,49 +63,46 @@ export default function Home() {
             }
 
             try {
-
                 const results = await Promise.all(promises);
-                const flattenedResults: any[] = results.flat();
-
-                // @ts-ignore
+                const flattenedResults = results.flat();
                 setWeatherData(flattenedResults);
-
-                const grouped = Object.groupBy(flattenedResults, result => getColor(result.temperature).id);
-                const colorCount = Object.entries(grouped).reduce((acc, [key, value]) => {
-                    // @ts-ignore
-                    acc[key] = value.length;
+                const grouped = flattenedResults.reduce((acc: Record<string, WeatherDataType[]>, result) => {
+                    const color = getColor(result.temperature);
+                    acc[color.id] = acc[color.id] || [];
+                    acc[color.id].push(result);
                     return acc;
                 }, {});
+                const colorCount = Object.fromEntries(
+                    Object.entries(grouped).map(([key, value]) => [key, value.length])
+                );
                 setCount(colorCount);
-
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             } finally {
                 setLoading(false);
             }
-        }
+        };
 
         fetchWeather();
     }, []);
 
-    function getWeekDay(dateString: string) {
+    const getWeekDay = (dateString: string): string => {
         return dayjs(dateString).format('dddd');
-    }
+    };
 
-    function getDate(dateString: string) {
+    const getDate = (dateString: string): string => {
         return dayjs(dateString).format('DD.MM.');
-    }
+    };
 
-    function getColor(temp: number): Color {
-        return colors.filter(color => color.matches(temp))[0];
-    }
+    const getColor = (temp: number): Color => {
+        return colors.find((color) => color.matches(temp))!;
+    };
 
-    function isWeekend(dateString: string) {
+    const isWeekend = (dateString: string): boolean => {
         const date = dayjs(dateString);
         return [0, 6].includes(date.day());
-    }
+    };
 
-    // @ts-ignore
     return (
         <div>
             <h2>Farben</h2>
@@ -108,26 +110,23 @@ export default function Home() {
             <table border={1}>
                 <thead>
                 <tr>
-                    <th>Range</th>
+                    <th>Spanne</th>
                     <th>Name</th>
-                    <th>Colour</th>
+                    <th>Farbe</th>
                     <th>Dyelot</th>
                     <th style={{width: 100}}></th>
-                    <th>Count</th>
+                    <th>Anzahl</th>
                 </tr>
                 </thead>
                 <tbody>
-                {colors.map(color => (
+                {colors.map((color) => (
                     <tr key={color.id}>
                         <td>{color.range()}</td>
                         <td>{color.label}</td>
                         <td>{color.id}</td>
                         <td>{color.dyelot}</td>
                         <td style={{background: color.hexCode}}></td>
-                        <td>{
-                            // @ts-ignore
-                            count[color.id]
-                        }</td>
+                        <td>{count[color.id] || 0}</td>
                     </tr>
                 ))}
                 </tbody>
@@ -149,27 +148,25 @@ export default function Home() {
                     </tr>
                     </thead>
                     <tbody>
-                    {weatherData.map((entry: { timestamp: string, temperature: number }, index) => (
-
-                        <>
-                            {isWeekend(entry.timestamp)
-                                ? <tr key={index} style={{color: '#666666'}}>
-                                    <td>{getDate(entry.timestamp)}</td>
-                                    <td>{getWeekDay(entry.timestamp)}</td>
-                                    <td>{entry.temperature}°C</td>
-                                    <td>{getColor(entry.temperature).label}</td>
-                                    <td></td>
-                                </tr>
-                                : <tr key={index}>
-                                    <td>{getDate(entry.timestamp)}</td>
-                                    <td>{getWeekDay(entry.timestamp)}</td>
-                                    <td>{entry.temperature}°C</td>
-                                    <td>{getColor(entry.temperature).label}</td>
-                                    <td style={{background: getColor(entry.temperature).hexCode}}></td>
-                                </tr>
-                            }
-
-                        </>
+                    {weatherData.map((entry, index) => (
+                        <tr
+                            key={index}
+                            style={{
+                                color: isWeekend(entry.timestamp) ? '#666666' : undefined,
+                            }}
+                        >
+                            <td>{getDate(entry.timestamp)}</td>
+                            <td>{getWeekDay(entry.timestamp)}</td>
+                            <td>{entry.temperature}°C</td>
+                            <td>{getColor(entry.temperature).label}</td>
+                            <td
+                                style={{
+                                    background: isWeekend(entry.timestamp)
+                                        ? undefined
+                                        : getColor(entry.temperature).hexCode,
+                                }}
+                            ></td>
+                        </tr>
                     ))}
                     </tbody>
                 </table>
