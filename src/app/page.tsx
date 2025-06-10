@@ -13,7 +13,7 @@ dayjs.locale('de');
 
 type WeatherDataType = {
     timestamp: string;
-    temperature: number;
+    temperature: number | null;
 };
 
 export default function Home() {
@@ -34,6 +34,8 @@ export default function Home() {
         new Color(24, 27, 'Wüstenrose', '63', '0226', '#EBBBAA'),
         new Color(27, null, 'Pfirsich', '27', '0226', '#F4AF92'),
     ];
+
+    const nullColor = new Color(null, null, '—', '', '', '#333333');
 
     useEffect(() => {
         const fetchWeather = async () => {
@@ -67,6 +69,7 @@ export default function Home() {
                 const flattenedResults = results.flat();
                 setWeatherData(flattenedResults);
                 const grouped = flattenedResults.reduce((acc: Record<string, WeatherDataType[]>, result) => {
+                    console.log(result.timestamp, result.temperature);
                     const color = getColor(result.temperature);
                     acc[color.id] = acc[color.id] || [];
                     acc[color.id].push(result);
@@ -90,11 +93,19 @@ export default function Home() {
         return dayjs(dateString).format('dddd');
     };
 
+    const getTemperature = (temp: number | null): string => {
+        return temp === null ? '—' : temp + '°C';
+    };
+
     const getDate = (dateString: string): string => {
         return dayjs(dateString).format('DD.MM.');
     };
 
-    const getColor = (temp: number): Color => {
+    const getColor = (temp: number | null): Color => {
+        if (temp === null) {
+            return nullColor;
+        }
+
         return colors.find((color) => color.matches(temp))!;
     };
 
@@ -157,7 +168,7 @@ export default function Home() {
                         >
                             <td>{getDate(entry.timestamp)}</td>
                             <td>{getWeekDay(entry.timestamp)}</td>
-                            <td>{entry.temperature}°C</td>
+                            <td>{getTemperature(entry.temperature)}</td>
                             <td>{getColor(entry.temperature).label}</td>
                             <td
                                 style={{
