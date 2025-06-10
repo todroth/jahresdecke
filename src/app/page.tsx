@@ -86,7 +86,7 @@ export default function Home() {
         };
 
         fetchWeather();
-    }, []);
+    });
 
     const getWeekDay = (dateString: string): string => {
         return dayjs(dateString).format('dddd');
