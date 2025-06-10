@@ -69,7 +69,6 @@ export default function Home() {
                 const flattenedResults = results.flat();
                 setWeatherData(flattenedResults);
                 const grouped = flattenedResults.reduce((acc: Record<string, WeatherDataType[]>, result) => {
-                    console.log(result.timestamp, result.temperature);
                     const color = getColor(result.temperature);
                     acc[color.id] = acc[color.id] || [];
                     acc[color.id].push(result);
