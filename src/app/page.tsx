@@ -6,18 +6,15 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import isToday from 'dayjs/plugin/isToday';
 import {Color} from '@/app/Color';
 import 'dayjs/locale/de';
+import {LocalStorage} from "@/app/LocalStorage";
+import {WeatherData} from "@/app/WeatherData";
 
 dayjs.extend(localizedFormat);
 dayjs.extend(isToday);
 dayjs.locale('de');
 
-type WeatherDataType = {
-    timestamp: string;
-    temperature: number | null;
-};
-
 export default function Home() {
-    const [weatherData, setWeatherData] = useState<WeatherDataType[]>([]);
+    const [weatherData, setWeatherData] = useState<WeatherData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [count, setCount] = useState<Record<string, number>>({});
 
@@ -38,46 +35,39 @@ export default function Home() {
     const nullColor = new Color(null, null, '—', '', '', '#333333');
 
     useEffect(() => {
+
         const fetchWeather = async () => {
-            const lat = 47.66;
-            const lon = 9.18;
             const today = dayjs();
             const pastYear = today.subtract(365, 'day');
 
-            const promises: Promise<WeatherDataType[]>[] = [];
+            const promises: Promise<WeatherData[]>[] = [];
             for (let d = today; d.isAfter(pastYear) || d.isSame(pastYear, 'day'); d = d.subtract(1, 'day')) {
-                const date = d.format('YYYY-MM-DD');
 
                 if (d.isToday() && dayjs().hour() < 12) {
                     continue;
                 }
 
-                promises.push(
-                    fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
-                        .then((response) => response.json())
-                        .then((data) => {
-                            return data.weather.filter((entry: WeatherDataType) => {
-                                const hour = dayjs(entry.timestamp).hour();
-                                return hour === 12; // Filter for 12 o'clock UTC
-                            });
-                        })
-                );
+                const date = d.format('YYYY-MM-DD');
+
+                if (LocalStorage.contains(date)) {
+                    promises.push(fetchFromLocalStorage(date));
+                } else {
+                    promises.push(fetchFromApi(date));
+                }
+
             }
 
             try {
+
                 const results = await Promise.all(promises);
                 const flattenedResults = results.flat();
+
                 setWeatherData(flattenedResults);
-                const grouped = flattenedResults.reduce((acc: Record<string, WeatherDataType[]>, result) => {
-                    const color = getColor(result.temperature);
-                    acc[color.id] = acc[color.id] || [];
-                    acc[color.id].push(result);
-                    return acc;
-                }, {});
-                const colorCount = Object.fromEntries(
-                    Object.entries(grouped).map(([key, value]) => [key, value.length])
-                );
+                setInLocalStorage(flattenedResults);
+
+                const colorCount = calculateColorCount(flattenedResults);
                 setCount(colorCount);
+
             } catch (error) {
                 console.error('Error fetching weather data:', error);
             } finally {
@@ -86,7 +76,67 @@ export default function Home() {
         };
 
         fetchWeather();
-    });
+
+    }, []);
+
+    const fetchFromLocalStorage = (date: string): Promise<WeatherData[]> => {
+
+        const timestamp = dayjs(date).set('hour', 12).toString();
+        const weatherData = new WeatherData(timestamp, LocalStorage.get(date));
+
+        console.log(`Get LocalStorage: ${date} - ${weatherData.temperature}`);
+
+        return new Promise<WeatherData[]>((resolve) => {
+            resolve([weatherData]);
+        });
+
+    };
+
+    const fetchFromApi = (date: string): Promise<WeatherData[]> => {
+
+        const lat = 47.66;
+        const lon = 9.18;
+
+        return fetch(`https://api.brightsky.dev/weather?lat=${lat}&lon=${lon}&date=${date}`)
+            .then((response) => response.json())
+            .then((data) => {
+                return data.weather.filter((entry: WeatherData) => {
+                    const hour = dayjs(entry.timestamp).hour();
+                    return hour === 12; // Filter for 12 o'clock UTC
+                });
+            });
+
+    };
+
+    const setInLocalStorage = (weatherDataArr: WeatherData[]): void => {
+
+        weatherDataArr
+            .filter(weatherData => !dayjs(weatherData.timestamp).isToday())
+            .filter(weatherData => weatherData.temperature !== null)
+            .forEach(weatherData => {
+                const date = dayjs(weatherData.timestamp).format('YYYY-MM-DD');
+                LocalStorage.set(date, weatherData.temperature!)
+
+                console.log(`Set LocalStorage: ${date} - ${weatherData.temperature}`);
+
+            })
+
+    };
+
+    const calculateColorCount = (weatherDataArr: WeatherData[]): Record<string, number> => {
+
+        const grouped = weatherDataArr.reduce((acc: Record<string, WeatherData[]>, result) => {
+            const color = getColor(result.temperature);
+            acc[color.id] = acc[color.id] || [];
+            acc[color.id].push(result);
+            return acc;
+        }, {});
+
+        return Object.fromEntries(
+            Object.entries(grouped).map(([key, value]) => [key, value.length])
+        );
+
+    }
 
     const getWeekDay = (dateString: string): string => {
         return dayjs(dateString).format('dddd');
