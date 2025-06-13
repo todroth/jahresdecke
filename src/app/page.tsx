@@ -163,74 +163,86 @@ export default function Home() {
         return [0, 6].includes(date.day());
     };
 
+    const clearCache = () => {
+        localStorage.clear();
+        window.location.reload();
+    };
+
     return (
         <div>
-            <h2>Farben</h2>
+            <div>
+                <h2>Farben</h2>
 
-            <table border={1}>
-                <thead>
-                <tr>
-                    <th>Spanne</th>
-                    <th>Name</th>
-                    <th>Farbe</th>
-                    <th>Dyelot</th>
-                    <th style={{width: 100}}></th>
-                    <th>Anzahl</th>
-                </tr>
-                </thead>
-                <tbody>
-                {colors.map((color) => (
-                    <tr key={color.id}>
-                        <td>{color.range()}</td>
-                        <td>{color.label}</td>
-                        <td>{color.id}</td>
-                        <td>{color.dyelot}</td>
-                        <td style={{background: color.hexCode}}></td>
-                        <td>{count[color.id] || 0}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-
-            <h2>Temperaturen</h2>
-
-            {loading ? (
-                <div>Loading...</div>
-            ) : (
                 <table border={1}>
                     <thead>
                     <tr>
-                        <th>Datum</th>
-                        <th>Wochentag</th>
-                        <th>Temperatur</th>
+                        <th>Spanne</th>
+                        <th>Name</th>
                         <th>Farbe</th>
-                        <th style={{width: 100}}></th>
+                        <th>Dyelot</th>
+                        <th style={{width: 50}}></th>
+                        <th>Anzahl</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {weatherData.map((entry, index) => (
-                        <tr
-                            key={index}
-                            style={{
-                                color: isWeekend(entry.timestamp) ? '#666666' : undefined,
-                            }}
-                        >
-                            <td>{getDate(entry.timestamp)}</td>
-                            <td>{getWeekDay(entry.timestamp)}</td>
-                            <td>{getTemperature(entry.temperature)}</td>
-                            <td>{getColor(entry.temperature).label}</td>
-                            <td
-                                style={{
-                                    background: isWeekend(entry.timestamp)
-                                        ? undefined
-                                        : getColor(entry.temperature).hexCode,
-                                }}
-                            ></td>
+                    {colors.map((color) => (
+                        <tr key={color.id}>
+                            <td>{color.range()}</td>
+                            <td>{color.label}</td>
+                            <td>{color.id}</td>
+                            <td>{color.dyelot}</td>
+                            <td style={{background: color.hexCode}}></td>
+                            <td>{count[color.id] || 0}</td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
-            )}
+            </div>
+            <div>
+
+                <h2>Temperaturen</h2>
+
+                {loading ? (
+                    <div>Loading...</div>
+                ) : (
+                    <table border={1}>
+                        <thead>
+                        <tr>
+                            <th>Datum</th>
+                            <th>Wochentag</th>
+                            <th>Temperatur</th>
+                            <th>Farbe</th>
+                            <th style={{width: 100}}></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {weatherData.map((entry, index) => (
+                            <tr
+                                key={index}
+                                style={{
+                                    color: isWeekend(entry.timestamp) ? '#666666' : undefined,
+                                }}
+                            >
+                                <td>{getDate(entry.timestamp)}</td>
+                                <td>{getWeekDay(entry.timestamp)}</td>
+                                <td>{getTemperature(entry.temperature)}</td>
+                                <td>{getColor(entry.temperature).label}</td>
+                                <td
+                                    style={{
+                                        background: isWeekend(entry.timestamp)
+                                            ? undefined
+                                            : getColor(entry.temperature).hexCode,
+                                    }}
+                                ></td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+            <div>
+                <button id={'btnClearCache'} onClick={clearCache}>Clear cache</button>
+            </div>
         </div>
     );
 }

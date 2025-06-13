@@ -23,4 +23,8 @@ export class LocalStorage {
 
     }
 
+    static clear(): void {
+        localStorage.clear();
+    }
+
 }

@@ -41,3 +41,7 @@ a {
         color-scheme: dark;
     }
 }
+
+div {
+    padding: 10px;
+}
