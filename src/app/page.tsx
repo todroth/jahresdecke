@@ -164,7 +164,7 @@ export default function Home() {
     };
 
     const clearCache = () => {
-        localStorage.clear();
+        LocalStorage.clearCache();
         window.location.reload();
     };
 
